@@ -1,9 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-
-
 public class Icosahedron
 {
 
@@ -38,6 +35,7 @@ public class Icosahedron
     mesh.RecalculateNormals();
     mesh.Optimize();
 
+
     MeshData meshData = new MeshData(faces, pentagonVerts, mesh);
     return meshData;
   }
@@ -46,9 +44,7 @@ public class Icosahedron
   {
     CreateIcoVertices();
     CreateIcoFaces();
-
     SubDivideMesh(subdivisionLevel);
-
     PopulateTriangles(faces);
   }
 
@@ -137,9 +133,13 @@ public class Icosahedron
 
   private void CreateFace(int v1, int v2, int v3, List<Face> facesList)
   {
-    Vector3 center = (vertices[v1] + vertices[v2] + vertices[v3]) / 3f;
+    List<Vector3> faceVerts = new List<Vector3>();
+    faceVerts.Add(vertices[v1]);
+    faceVerts.Add(vertices[v2]);
+    faceVerts.Add(vertices[v3]);
+    Vector3 center = (faceVerts[0] + faceVerts[1] + faceVerts[2]) / 3f;
 
-    facesList.Add(new Face(v1, v2, v3, center.normalized));
+    facesList.Add(new Face(v1, v2, v3, center.normalized, faceVerts));
   }
 
   private int GetMidPointIndex(Dictionary<int, int> cache, int v1, int v2)
@@ -182,33 +182,7 @@ public class Icosahedron
       triangles.Add(faceList[i].v3);
     }
   }
+
 }
 
-public struct Face
-{
-  public int v1;
-  public int v2;
-  public int v3;
-  public Vector3 center;
 
-  public Face(int v1, int v2, int v3, Vector3 center) : this()
-  {
-    this.v1 = v1;
-    this.v2 = v2;
-    this.v3 = v3;
-    this.center = center;
-  }
-}
-public struct MeshData
-{
-  public List<Face> faces;
-  public Vector3[] pentagons;
-  public Mesh mesh;
-
-  public MeshData(List<Face> faces, Vector3[] pentagons, Mesh mesh)
-  {
-    this.faces = faces;
-    this.pentagons = pentagons;
-    this.mesh = mesh;
-  }
-}
