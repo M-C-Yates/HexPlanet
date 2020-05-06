@@ -34,6 +34,8 @@ public class Planet : MonoBehaviour
   {
     meshData = icoSphere.Generate(subdivisionLevel);
     GeneratePents();
+
+
     // GenerateHexs();
 
     meshData.mesh.Clear();
