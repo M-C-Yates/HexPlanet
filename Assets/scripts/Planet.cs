@@ -36,7 +36,7 @@ public class Planet : MonoBehaviour
     GeneratePents();
 
 
-    // GenerateHexs();
+    GenerateHexs();
 
     meshData.mesh.Clear();
 
