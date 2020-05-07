@@ -328,7 +328,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e69388ff4acc4d479359376b80ca218, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  subdivisionLevel: 2
+  subdivisionLevel: 1
 --- !u!33 &1636548324
 MeshFilter:
   m_ObjectHideFlags: 0

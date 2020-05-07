@@ -9,20 +9,27 @@ public class Icosahedron
   List<Face> faces = new List<Face>();
   Vector3[] pentagonVerts = new Vector3[12];
 
-  float phi = 1.618034f; // golden ratio
-
+  Dictionary<Vector3, VertexData> vertexCache = new Dictionary<Vector3, VertexData>();
   Dictionary<int, int> cache = new Dictionary<int, int>();
+
 
   Mesh mesh;
 
   Vector3 northPole;
 
+  int radius;
 
-  public MeshData Generate(int subdivisionLevel)
+  float phi = 1.618034f; // golden ratio
+
+
+
+  public MeshData Generate(int subdivisionLevel, int radius)
   {
+    this.radius = radius;
     vertices.Clear();
     triangles.Clear();
     faces.Clear();
+
 
     mesh = new Mesh();
     mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -33,7 +40,9 @@ public class Icosahedron
 
     mesh.triangles = triangles.ToArray();
     mesh.RecalculateNormals();
-    mesh.Optimize();
+
+    vertexCache[vertices[0]].GetTris();
+    // mesh.Optimize();
 
 
     MeshData meshData = new MeshData(faces, pentagonVerts, mesh);
@@ -51,22 +60,22 @@ public class Icosahedron
   private void CreateIcoVertices()
   {
     // create the 12 vertices of the icosahedron
-    northPole = new Vector3(0, phi, 0).normalized;
+    northPole = new Vector3(0, phi, 0).normalized * radius;
 
-    vertices.Add(new Vector3(-1, phi, 0).normalized);
-    vertices.Add(new Vector3(1, phi, 0).normalized);
-    vertices.Add(new Vector3(-1, -phi, 0).normalized);
-    vertices.Add(new Vector3(1, -phi, 0).normalized);
+    CreateVertice(-1, phi, 0);
+    CreateVertice(1, phi, 0);
+    CreateVertice(-1, -phi, 0);
+    CreateVertice(1, -phi, 0);
 
-    vertices.Add(new Vector3(0, -1, phi).normalized);
-    vertices.Add(new Vector3(0, 1, phi).normalized);
-    vertices.Add(new Vector3(0, -1, -phi).normalized);
-    vertices.Add(new Vector3(0, 1, -phi).normalized);
+    CreateVertice(0, -1, phi);
+    CreateVertice(0, 1, phi);
+    CreateVertice(0, -1, -phi);
+    CreateVertice(0, 1, -phi);
 
-    vertices.Add(new Vector3(phi, 0, -1).normalized);
-    vertices.Add(new Vector3(phi, 0, 1).normalized);
-    vertices.Add(new Vector3(-phi, 0, -1).normalized);
-    vertices.Add(new Vector3(-phi, 0, 1).normalized);
+    CreateVertice(phi, 0, -1);
+    CreateVertice(phi, 0, 1);
+    CreateVertice(-phi, 0, -1);
+    CreateVertice(-phi, 0, 1);
 
     pentagonVerts = vertices.ToArray();
   }
@@ -133,13 +142,29 @@ public class Icosahedron
 
   private void CreateFace(int v1, int v2, int v3, List<Face> facesList)
   {
-    List<Vector3> faceVerts = new List<Vector3>();
-    faceVerts.Add(vertices[v1]);
-    faceVerts.Add(vertices[v2]);
-    faceVerts.Add(vertices[v3]);
-    Vector3 center = (faceVerts[0] + faceVerts[1] + faceVerts[2]) / 3f;
 
-    facesList.Add(new Face(v1, v2, v3, center.normalized, faceVerts));
+    Vector3[] faceVerts = {
+      vertices[v1],
+      vertices[v2],
+      vertices[v3]
+    };
+
+    Vector3 center = ((faceVerts[0] + faceVerts[1] + faceVerts[2]).normalized * radius) / 3f;
+
+    Face tri = new Face(v1, v2, v3, center, faceVerts);
+
+    vertexCache[faceVerts[0]].AddTri(tri);
+    vertexCache[faceVerts[1]].AddTri(tri);
+    vertexCache[faceVerts[2]].AddTri(tri);
+
+    facesList.Add(tri);
+  }
+
+  private void CreateVertice(float p1, float p2, float p3)
+  {
+    Vector3 vertice = new Vector3(p1, p2, p3).normalized * radius;
+    vertexCache.Add(vertice, new VertexData(vertice));
+    vertices.Add(vertice);
   }
 
   private int GetMidPointIndex(Dictionary<int, int> cache, int v1, int v2)
@@ -163,12 +188,14 @@ public class Icosahedron
     Vector3 pointA = vertices[v1];
     Vector3 pointB = vertices[v2];
 
-    Vector3 middle = Vector3.Lerp(pointA, pointB, 0.5f).normalized;
+    Vector3 middle = Vector3.Lerp(pointA, pointB, 0.5f).normalized * radius;
 
     cachedIndex = vertices.Count;
 
+
     vertices.Add(middle);
     cache.Add(key, cachedIndex);
+    vertexCache.Add(middle, new VertexData(middle));
     return cachedIndex;
   }
 
@@ -186,3 +213,27 @@ public class Icosahedron
 }
 
 
+public struct VertexData
+{
+  public Vector3 vertex;
+  public List<Face> triangles;
+
+  public VertexData(Vector3 vertex) : this()
+  {
+    this.vertex = vertex;
+    triangles = new List<Face>();
+  }
+
+  public void AddTri(Face tri)
+  {
+    triangles.Add(tri);
+  }
+
+  public void GetTris()
+  {
+    foreach (Face tri in triangles)
+    {
+      Debug.Log($"{tri.vertices[0]},{tri.vertices[1]},{tri.vertices[2]}");
+    }
+  }
+}
